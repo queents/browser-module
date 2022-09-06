@@ -1,12 +1,20 @@
 {
     "name": "nwidart/browser",
-    "description": "",
-    "authors": [
-        {
-            "name": "Nicolas Widart",
-            "email": "n.widart@gmail.com"
-        }
+    "description": "VILT browser modules to browser the file inside your app",
+    "keywords": [
+        "laravel",
+        "browser",
+        "file browser GUI",
+        "ui",
+        "vilt-admin",
+        "Vilt stack"
     ],
+    "type": "laravel-module",
+    "homepage": "https://www.queentechsolutions.net",
+    "license": "MIT",
+    "require": {
+        "queents/vilt": "^1.0"
+    },
     "extra": {
         "laravel": {
             "providers": [],
