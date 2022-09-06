@@ -14,6 +14,13 @@ Add Module to `modules_statuses.json` if not exists
     "Browser": true
 }
 ```
+
+Add Permission to Admin
+
+```bash
+php artisan roles:generate browser
+```
+
 Publish Assets
 
 ```bash
