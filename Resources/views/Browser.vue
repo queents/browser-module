@@ -142,7 +142,7 @@ import JetButton from "@/Jetstream/Button.vue";
 import JetInput from "@/Jetstream/Input.vue";
 import JetInputError from "@/Jetstream/InputError.vue";
 import JetLabel from "@/Jetstream/Label.vue";
-import ViltMedia from "@/Components/Base/Rows/ViltMedia.vue";
+import ViltMedia from "$$/ViltMedia.vue";
 import "codemirror/lib/codemirror.css";
 import "codemirror/mode/php/php.js";
 import "codemirror/mode/javascript/javascript.js";
