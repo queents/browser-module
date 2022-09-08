@@ -1,4 +1,360 @@
+<script setup>
+import Header from "@@/Layouts/Includes/Header.vue";
+import {createToaster} from "@meforma/vue-toaster";
+import {computed, onMounted, ref} from "vue";
+import {Inertia} from "@inertiajs/inertia";
+import {useForm, usePage} from "@inertiajs/inertia-vue3";
+import {useTrans} from "@@/Composables/useTrans";
+import JetDialogModal from "@@/Jetstream/DialogModal.vue";
+import JetSecondaryButton from "@@/Jetstream/SecondaryButton.vue";
+import JetButton from "@@/Jetstream/Button.vue";
+import ViltForm from "$$/ViltForm.vue";
+import JetInput from "@@/Jetstream/Input.vue";
+import JetInputError from "@@/Jetstream/InputError.vue";
+import JetLabel from "@@/Jetstream/Label.vue";
+import "codemirror/lib/codemirror.css";
+import "codemirror/mode/php/php.js";
+import "codemirror/mode/javascript/javascript.js";
+import "codemirror/mode/css/css.js";
+import "codemirror/mode/htmlmixed/htmlmixed.js";
+import "codemirror/addon/edit/matchbrackets";
+import "codemirror/mode/xml/xml.js";
+import "codemirror/theme/base16-dark.css";
+import "codemirror/mode/clike/clike.js";
+import Codemirror from "codemirror-editor-vue3";
+
+const props = defineProps({
+    folders: Array,
+    files: Array,
+    back_path: String,
+    back_name: String,
+    current_path: String,
+    file: Boolean,
+    ex: Boolean,
+    path: Boolean,
+    history: Object,
+    rows: Object,
+    roles: Object,
+    render: Object,
+    list: Object,
+    data: Object,
+});
+
+const toaster = createToaster({ /* options */});
+
+/*
+Actions / Modals Data
+ */
+let actionModal = ref({});
+let modalAction = ref({});
+let selectedID = ref(null);
+let errors = ref({});
+let form = ref(useForm({
+    file: null,
+    path: "",
+}));
+let uploadModal = ref(false);
+let cmOptions = ref({
+    tabSize: 4,
+    mode: "application/x-httpd-php",
+    theme: "base16-dark",
+    lineNumbers: true,
+    line: true,
+    matchBrackets: true,
+    indentUnit: 4,
+    indentWithTabs: true,
+    lineWrapping: true,
+});
+let imagePath = ref(false)
+
+
+/*
+Methods
+ */
+function fireAction (name, id = null){
+    Inertia.post(route(name), {
+        id: id ? id : selectedID.value,
+    });
+}
+
+function openModal(name, id = null){
+    selectedID.value = id;
+    actionModal.value[name] = !actionModal.value[name];
+}
+
+function modalActionRun(modal, action) {
+    if (selectedID.value) {
+        modalAction.value[modal].id = selectedID.value;
+    }
+    let form = useForm(modalAction.value[modal]);
+    console.log(form);
+    Inertia.post(route(action), form,{
+        preserveScroll: true,
+        onSuccess: () => {
+            form.reset();
+            actionModal.value[modal] = false;
+            success();
+        },
+    });
+}
+
+
+function openUrl(url){
+    window.open(url);
+}
+
+/*
+Fire Success Response / Error Response
+ */
+
+const getMessage = computed({
+    get() {
+        return props.data.message
+    },
+    set(value) {
+        return value;
+    },
+});
+const success = () => {
+    const message = getMessage.value;
+    if (typeof message === 'object') {
+        if (message.type === 'error') {
+            toaster.error(message.message, {
+                position: 'top',
+            });
+        } else if (message.type === 'success') {
+            toaster.success(message.message, {
+                position: 'top',
+            });
+        } else {
+            toaster.success(message.message, {
+                position: 'top',
+            });
+        }
+    } else {
+        toaster.success(message, {
+            position: 'top',
+        });
+    }
+}
+
+// Load Components
+const modals = computed(() => {
+    let modalsArray = [];
+    if(props.render.components){
+        for (let i = 0; i < props.render.components.length; i++) {
+            if(props.render.components[i].classType === 'modal'){
+                modalsArray.push(props.render.components[i]);
+            }
+        }
+    }
+
+    return modalsArray;
+});
+const widgets = computed(() => {
+    let widgetsArray = [];
+    if(props.render.components) {
+        for (let i = 0; i < props.render.components.length; i++) {
+            if (props.render.components[i].classType === 'widget') {
+                widgetsArray.push(props.render.components[i]);
+            }
+        }
+    }
+    return widgetsArray;
+});
+const actions = computed(() => {
+    let actionsArray = [];
+    if(props.render.components) {
+        for (let i = 0; i < props.render.components.length; i++) {
+            if (props.render.components[i].classType === 'action') {
+                actionsArray.push(props.render.components[i]);
+            }
+        }
+    }
+    return actionsArray;
+});
+
+// Load Languages
+const gLang = computed(
+    () => usePage().props.value.data.trans
+);
+const rLang = computed(
+    () => props.render.lang
+)
+
+let {trans} = useTrans();
+
+//Load Roles
+const roles = props.roles;
+
+// Mounted
+onMounted(() => {
+    //Set Modals
+    if(modals.value.length){
+        for (let i = 0; i < modals.value.length; i++) {
+            actionModal.value[modals.value[i].name] = false;
+            modalAction.value[modals.value[i].name] = useForm({});
+        }
+    }
+})
+
+// Methods
+function uploadFile() {
+    form.value.path = props.history.current_path;
+    Inertia.post(route("browser.upload"), form.value,{
+        preserveScroll: false,
+        onSuccess: () => {
+            form.value.reset();
+            uploadModal.value = !uploadModal.value;
+            success();
+        },
+    });
+}
+function getFolder(data) {
+    Inertia.post(route("browser.post"), {
+        folder_path: data.path,
+        folder_name: data.name,
+        type: "folder",
+    });
+}
+function getFile(data) {
+    Inertia.post(route("browser.post"), {
+        file_path: data.path,
+        file_name: data.name,
+        type: "file",
+    });
+}
+function goHome() {
+    fileContent.value = false;
+    imagePath.value = false;
+    Inertia.get(route("browser.index"));
+}
+function goBack() {
+    fileContent.value = false;
+    imagePath.value = false;
+    Inertia.post(route("browser.post"), {
+        folder_path: props.history.back_path,
+        folder_name: props.history.back_name,
+        type: "back",
+    });
+}
+function saveFile() {
+    fileContent.value = false;
+    imagePath.value = false;
+    Inertia.post(
+        route("browser.post"),
+        {
+            path: props.path,
+            content: fileContent.value,
+            type: "save",
+        },
+        {
+            onSuccess: () => {
+                success();
+            },
+        }
+    );
+}
+
+// Computed
+const fileContent = computed(() => {
+    let fileContent = false;
+    if (props.ex) {
+        if (props.ex == "php") {
+            cmOptions.value.mode = "application/x-httpd-php";
+            fileContent = props.file;
+        } else if (
+            props.ex == "js" ||
+            props.ex == "json" ||
+            props.ex == "lock"
+        ) {
+            cmOptions.value.mode = {
+                name: "javascript",
+                json: true,
+            };
+            fileContent = props.file;
+        } else if (props.ex == "css") {
+            cmOptions.value.mode = "text/css";
+            fileContent = props.file;
+        } else if (
+            props.ex == "webp" ||
+            props.ex == "svg" ||
+            props.ex == "png" ||
+            props.ex == "jpg" ||
+            props.ex == "jpeg" ||
+            props.ex == "tif" ||
+            props.ex == "gif" ||
+            props.ex == "ico"
+        ) {
+            this.imagePath =
+                "data:image/png;base64," + props.file;
+        } else {
+            fileContent = props.file;
+        }
+    }
+    return fileContent;
+});
+
+</script>
 <template>
+    <div class="px-6 pt-6 mx-auto">
+        <!-- Main Resource Header -->
+        <Header
+            v-if="rLang"
+            :canCreate="false"
+            :title="rLang ? rLang.index : ''"
+            :button="rLang ? rLang.create: ''"
+            :url="props.list.url+'.index'"
+        >
+            <!-- Actions Generator -->
+            <a
+                v-for="(action, index) in actions"
+                :key="index"
+                :href="action.url ? action.url : '#'"
+                @click.prevent="
+                            !action.url
+                                ? action.modal
+                                    ? openModal(action.modal)
+                                    : fireAction(action.action)
+                                : openUrl(action.url)
+                        "
+                class="relative inline-flex items-center px-8 py-3 overflow-hidden text-white bg-main rounded group active:bg-blue-500 focus:outline-none focus:ring"
+            >
+                        <span
+                            class="absolute left-0 transition-transform -translate-x-full group-hover:translate-x-4"
+                        >
+                            <i class="bx-sm mt-2" :class="action.icon"></i>
+                        </span>
+
+                <span
+                    class="text-sm font-medium transition-all group-hover:ml-4"
+                >
+                            {{ action.label }}
+                        </span>
+            </a>
+        </Header>
+
+        <!-- Widgets Generator -->
+        <div v-if="widgets.length" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 my-4">
+            <div
+                v-for="(item, key) in widgets"
+                :class="{
+                            'col-span-4 lg:col-span-4 md:col-span-4 sm:col-span-4': widgets.length === 1,
+                            'col-span-4 lg:col-span-2 md:col-span-2 sm:col-span-2': widgets.length === 2,
+                            'bg-success-500': item.type === 'success',
+                            'bg-danger-500': item.type === 'danger',
+                            'bg-blue-700': item.type === 'primary',
+                            'bg-warning-500': item.type === 'warning',
+                        }"
+                class="w-full bg-blue-500 rounded-lg text-center py-4 px-2 text-white">
+
+                <i class="bx-lg" :class="item.icon"></i>
+                <h1 class="text-2xl font-bold">{{ item.label }}</h1>
+                <p>{{ item.value }}</p>
+            </div>
+        </div>
+    </div>
+
     <div class="px-8 mx-auto">
         <div class="bg-white dark:bg-gray-800 dark:border-gray-600 rounded-lg border">
             <div class="p-8 ">
@@ -131,231 +487,51 @@
             </JetDialogModal>
         </div>
     </div>
+
+    <!-- Modals Generator -->
+    <JetDialogModal
+        v-for="(item, key) in modals"
+        :key="key"
+        :show="actionModal[item.name]"
+    >
+        <template #title>
+            <div class="flex justify-between">
+                {{ item.label }}
+            </div>
+        </template>
+
+        <template #content>
+            <form action="" enctype="multipart/form-data">
+                <ViltForm
+                    v-model="modalAction[item.name]"
+                    :rows="item.rows"
+                    :errors="modalAction[item.name].errors"
+                />
+            </form>
+        </template>
+
+        <template #footer>
+            <JetButton
+                v-for="(button, key) in item.buttons"
+                :key="key"
+                @click.prevent="modalActionRun(item.name, button.action)"
+                class="mx-2"
+            >{{ button.label }}
+            </JetButton>
+            <JetSecondaryButton
+                @click="actionModal[item.name] = !actionModal[item.name]"
+            >
+                {{ trans('global.close') }}
+            </JetSecondaryButton>
+        </template>
+    </JetDialogModal>
 </template>
 
 <script>
 import { defineComponent } from "vue";
-import JetDialogModal from "@@/Jetstream/DialogModal.vue";
-import JetSecondaryButton from "@@/Jetstream/SecondaryButton.vue";
-import JetButton from "@@/Jetstream/Button.vue";
-import JetInput from "@@/Jetstream/Input.vue";
-import JetInputError from "@@/Jetstream/InputError.vue";
-import JetLabel from "@@/Jetstream/Label.vue";
-import ViltMedia from "$$/ViltMedia.vue";
-import "codemirror/lib/codemirror.css";
-import "codemirror/mode/php/php.js";
-import "codemirror/mode/javascript/javascript.js";
-import "codemirror/mode/css/css.js";
-import "codemirror/mode/htmlmixed/htmlmixed.js";
-import "codemirror/addon/edit/matchbrackets";
-import "codemirror/mode/xml/xml.js";
-import "codemirror/theme/base16-dark.css";
-import "codemirror/mode/clike/clike.js";
-import Codemirror from "codemirror-editor-vue3";
 import AppLayout from "@@/Layouts/AppLayout.vue";
 
 export default defineComponent({
     layout: AppLayout,
-    components: {
-        JetDialogModal,
-        JetSecondaryButton,
-        JetButton,
-        JetInput,
-        JetInputError,
-        JetLabel,
-        ViltMedia,
-        Codemirror,
-    },
-    data() {
-        return {
-            uploadModal: false,
-            cmOptions: {
-                tabSize: 4,
-                mode: "application/x-httpd-php",
-                theme: "base16-dark",
-                lineNumbers: true,
-                line: true,
-                matchBrackets: true,
-                indentUnit: 4,
-                indentWithTabs: true,
-                lineWrapping: true,
-            },
-            imagePath: false,
-            form: this.$inertia.form({
-                file: null,
-                path: "",
-            }),
-        };
-    },
-    computed: {
-        getMessage() {
-            return this.$page.props.data.message;
-        },
-        lang() {
-            return this.$page.props.data.trans;
-        },
-        files() {
-            return this.$page.props.files;
-        },
-        folders() {
-            return this.$page.props.folders;
-        },
-        history() {
-            return this.$page.props.history;
-        },
-        path() {
-            return this.$page.props.path;
-        },
-        fileContent() {
-            let fileContent = false;
-            if (this.$page.props.ex) {
-                if (this.$page.props.ex == "php") {
-                    this.cmOptions.mode = "application/x-httpd-php";
-                    fileContent = this.$page.props.file;
-                } else if (
-                    this.$page.props.ex == "js" ||
-                    this.$page.props.ex == "json" ||
-                    this.$page.props.ex == "lock"
-                ) {
-                    this.cmOptions.mode = {
-                        name: "javascript",
-                        json: true,
-                    };
-                    fileContent = this.$page.props.file;
-                } else if (this.$page.props.ex == "css") {
-                    this.cmOptions.mode = "text/css";
-                    fileContent = this.$page.props.file;
-                } else if (
-                    this.$page.props.ex == "webp" ||
-                    this.$page.props.ex == "svg" ||
-                    this.$page.props.ex == "png" ||
-                    this.$page.props.ex == "jpg" ||
-                    this.$page.props.ex == "jpeg" ||
-                    this.$page.props.ex == "tif" ||
-                    this.$page.props.ex == "gif" ||
-                    this.$page.props.ex == "ico"
-                ) {
-                    this.imagePath =
-                        "data:image/png;base64," + this.$page.props.file;
-                } else {
-                    fileContent = this.$page.props.file;
-                }
-            }
-            return fileContent;
-        },
-    },
-    methods: {
-        uploadFile() {
-            this.form.path = this.history.current_path;
-            this.form.post(route("browser.upload"), {
-                onSuccess: () => {
-                    this.form.reset();
-                    this.uploadModal = !this.uploadModal;
-                    if (typeof this.getMessage === "object") {
-                        if (this.getMessage.type === "error") {
-                            this.$toast.error(this.getMessage.message, {
-                                position: "top",
-                                style: {
-                                    background: "rgba(210, 45, 61, .8)",
-                                    "border-radius": "0.25rem",
-                                },
-                            });
-                        } else if (this.getMessage.type === "success") {
-                            this.$toast.success(this.getMessage.message, {
-                                position: "top",
-                                style: {
-                                    background: "#7e3af2",
-                                    "border-radius": "0.25rem",
-                                },
-                            });
-                        }
-                    } else {
-                        this.$toast.success(this.getMessage, {
-                            position: "top",
-                            style: {
-                                background: "#7e3af2",
-                                "border-radius": "0.25rem",
-                            },
-                        });
-                    }
-                },
-            });
-        },
-        trans(key) {
-            let getKey = this.lang[key] ? this.lang[key] : key;
-            return getKey;
-        },
-        getFolder(data) {
-            this.$inertia.post(route("browser.post"), {
-                folder_path: data.path,
-                folder_name: data.name,
-                type: "folder",
-            });
-        },
-        getFile(data) {
-            this.$inertia.post(route("browser.post"), {
-                file_path: data.path,
-                file_name: data.name,
-                type: "file",
-            });
-        },
-        goHome() {
-            this.fileContent = false;
-            this.imagePath = false;
-            this.$inertia.get(route("browser.index"));
-        },
-        goBack() {
-            this.fileContent = false;
-            this.imagePath = false;
-            this.$inertia.post(route("browser.post"), {
-                folder_path: this.history.back_path,
-                folder_name: this.history.back_name,
-                type: "back",
-            });
-        },
-        saveFile() {
-            this.fileContent = false;
-            this.imagePath = false;
-            this.$inertia.post(
-                route("browser.post"),
-                {
-                    path: this.path,
-                    content: this.fileContent,
-                    type: "save",
-                },
-                {
-                    onSuccess: () => {
-                        if (typeof this.getMessage === "object") {
-                            if (this.getMessage.type === "error") {
-                                this.$toast.error(this.getMessage.message, {
-                                    position: "top",
-                                    style: {
-                                        background: "rgba(210, 45, 61, .8)",
-                                        "border-radius": "0.25rem",
-                                    },
-                                });
-                            } else if (this.getMessage.type === "success") {
-                                this.$toast.success(this.getMessage.message, {
-                                    position: "top",
-                                    style: {
-                                        background: "#7e3af2",
-                                        "border-radius": "0.25rem",
-                                    },
-                                });
-                            }
-                        } else {
-                            this.$toast.success(this.getMessage, {
-                                position: "top",
-                                style: {
-                                    background: "#7e3af2",
-                                    "border-radius": "0.25rem",
-                                },
-                            });
-                        }
-                    },
-                }
-            );
-        },
-    },
 });
 </script>

@@ -93,9 +93,21 @@ class BrowserPage extends Page
                     "ex" => $ex,
                     "path" => $setFilePath
                 ],
-                "lang" => $this->loadTranslations(),
-                "components" => $this->components(),
-                "table" => $this->table
+                "roles" => [
+                    "view" => $this->canView,
+                    "viewAny" => $this->canViewAny,
+                    "edit" => $this->canEdit,
+                    "create" => $this->canCreate,
+                    "delete" => $this->canDelete,
+                    "deleteAny" => $this->canDeleteAny,
+                ],
+                "render" => [
+                    "components" => $this->components(),
+                    "lang" => $this->loadTranslations(),
+                ],
+                "list" => [
+                    "url" => $this->table
+                ]
             ])->render();
         } elseif ($request->has('content')) {
             $checkIfFileEx = File::exists($request->get('path'));
@@ -157,9 +169,21 @@ class BrowserPage extends Page
                     "ex" => false,
                     "path" => false
                 ],
-                "lang" => $this->loadTranslations(),
-                "components" => $this->components(),
-                "table" => $this->table
+                "roles" => [
+                    "view" => $this->canView,
+                    "viewAny" => $this->canViewAny,
+                    "edit" => $this->canEdit,
+                    "create" => $this->canCreate,
+                    "delete" => $this->canDelete,
+                    "deleteAny" => $this->canDeleteAny,
+                ],
+                "render" => [
+                    "components" => $this->components(),
+                    "lang" => $this->loadTranslations(),
+                ],
+                "list" => [
+                    "url" => $this->table
+                ]
             ])->render();
         }
     }
