@@ -135,13 +135,12 @@
 
 <script>
 import { defineComponent } from "vue";
-import AppLayout from "@/Layouts/AppLayout.vue";
-import JetDialogModal from "@/Jetstream/DialogModal.vue";
-import JetSecondaryButton from "@/Jetstream/SecondaryButton.vue";
-import JetButton from "@/Jetstream/Button.vue";
-import JetInput from "@/Jetstream/Input.vue";
-import JetInputError from "@/Jetstream/InputError.vue";
-import JetLabel from "@/Jetstream/Label.vue";
+import JetDialogModal from "@@/Jetstream/DialogModal.vue";
+import JetSecondaryButton from "@@/Jetstream/SecondaryButton.vue";
+import JetButton from "@@/Jetstream/Button.vue";
+import JetInput from "@@/Jetstream/Input.vue";
+import JetInputError from "@@/Jetstream/InputError.vue";
+import JetLabel from "@@/Jetstream/Label.vue";
 import ViltMedia from "$$/ViltMedia.vue";
 import "codemirror/lib/codemirror.css";
 import "codemirror/mode/php/php.js";
@@ -153,12 +152,11 @@ import "codemirror/mode/xml/xml.js";
 import "codemirror/theme/base16-dark.css";
 import "codemirror/mode/clike/clike.js";
 import Codemirror from "codemirror-editor-vue3";
-import ResourceTableLayout from "@@/Layouts/ResourceTableLayout.vue";
+import AppLayout from "@@/Layouts/AppLayout.vue";
 
 export default defineComponent({
-    layout: ResourceTableLayout,
+    layout: AppLayout,
     components: {
-        AppLayout,
         JetDialogModal,
         JetSecondaryButton,
         JetButton,
