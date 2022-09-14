@@ -318,7 +318,7 @@ const fileContent = computed(() => {
                                     : fireAction(action.action)
                                 : openUrl(action.url)
                         "
-                class="relative inline-flex items-center px-8 py-3 overflow-hidden text-white bg-main rounded group active:bg-blue-500 focus:outline-none focus:ring"
+                class="relative inline-flex items-center px-8 py-3 overflow-hidden text-white bg-primary-600 rounded group active:bg-blue-500 focus:outline-none focus:ring"
             >
                         <span
                             class="absolute left-0 transition-transform -translate-x-full group-hover:translate-x-4"
@@ -496,7 +496,7 @@ const fileContent = computed(() => {
     >
         <template #title>
             <div class="flex justify-between">
-                {{ item.label }}
+                <h2 class="filament-modal-heading text-xl font-bold tracking-tight">{{ item.label }}</h2>
             </div>
         </template>
 
@@ -505,24 +505,27 @@ const fileContent = computed(() => {
                 <ViltForm
                     v-model="modalAction[item.name]"
                     :rows="item.rows"
-                    :errors="modalAction[item.name].errors"
+                    :errors="modalAction[item.name] ? modalAction[item.name].errors : {}"
                 />
             </form>
         </template>
 
         <template #footer>
-            <JetButton
-                v-for="(button, key) in item.buttons"
-                :key="key"
-                @click.prevent="modalActionRun(item.name, button.action)"
-                class="mx-2"
-            >{{ button.label }}
-            </JetButton>
-            <JetSecondaryButton
-                @click="actionModal[item.name] = !actionModal[item.name]"
-            >
-                {{ trans('global.close') }}
-            </JetSecondaryButton>
+            <div class="filament-modal-actions flex flex-wrap items-center gap-4 rtl:space-x-reverse">
+                <button
+                    class="filament-button inline-flex items-center justify-center py-1 gap-1 font-medium rounded-lg border transition-colors focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-inset dark:focus:ring-offset-0 min-h-[2.25rem] px-4 text-sm text-white shadow focus:ring-white border-transparent bg-primary-600 hover:bg-primary-500 focus:bg-primary-700 focus:ring-offset-primary-700 filament-page-modal-button-action"
+                    v-for="(button, key) in item.buttons"
+                    :key="key"
+                    @click.prevent="modalActionRun(item.name, button.action)"
+                >{{ button.label }}
+                </button>
+                <button
+                    class="filament-button inline-flex items-center justify-center py-1 gap-1 font-medium rounded-lg border transition-colors focus:outline-none focus:ring-offset-2 focus:ring-2 focus:ring-inset dark:focus:ring-offset-0 min-h-[2.25rem] px-4 text-sm text-gray-800 bg-white border-gray-300 hover:bg-gray-50 focus:ring-primary-600 focus:text-primary-600 focus:bg-primary-50 focus:border-primary-600 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-600 dark:hover:border-gray-500 dark:text-gray-200 dark:focus:text-primary-400 dark:focus:border-primary-400 dark:focus:bg-gray-800 filament-page-modal-button-action"
+                    @click="actionModal[item.name] = !actionModal[item.name]"
+                >
+                    {{ trans('global.close') }}
+                </button>
+            </div>
         </template>
     </JetDialogModal>
 </template>
